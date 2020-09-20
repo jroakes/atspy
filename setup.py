@@ -47,12 +47,12 @@ with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name="atspy (with Prophet)",
-    version="0.2.6",
-    description="Automated Time Series in Python",
+    name="atspy with fbprophet",
+    version="0.0.1",
+    description="Automated Time Series in Python (Includes FB Prophet)",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/firmai/atspy",
+    url="https://github.com/jroakes/atspy.git",
     author="snowde",
     author_email="d.snow@firmai.org",
     packages=find_packages(),
