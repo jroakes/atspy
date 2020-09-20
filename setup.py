@@ -48,7 +48,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="atspy with fbprophet",
-    version="0.0.1",
+    version="0.2.6.1",
     description="Automated Time Series in Python (Includes FB Prophet)",
     long_description=long_description,
     long_description_content_type="text/markdown",
