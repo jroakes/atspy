@@ -1,3 +1,14 @@
+# ERROR: umap-learn 0.4.6 has requirement numba!=0.47,>=0.46, but you'll have numba 0.47.0 which is incompatible.
+# ERROR: umap-learn 0.4.6 has requirement numpy>=1.17, but you'll have numpy 1.16.2 which is incompatible.
+# ERROR: torchvision 0.7.0+cu101 has requirement torch==1.6.0, but you'll have torch 1.4.0 which is incompatible.
+# ERROR: tensorflow-probability 0.11.0 has requirement gast>=0.3.2, but you'll have gast 0.2.2 which is incompatible.
+# ERROR: nbclient 0.5.0 has requirement jupyter-client>=6.1.5, but you'll have jupyter-client 5.3.5 which is incompatible.
+# ERROR: datascience 0.10.6 has requirement folium==0.2.1, but you'll have folium 0.8.3 which is incompatible.
+# ERROR: convertdate 2.1.2 has requirement pytz<2018,>=2014.10, but you'll have pytz 2018.9 which is incompatible.
+# ERROR: albumentations 0.1.12 has requirement imgaug<0.2.7,>=0.2.5, but you'll have imgaug 0.2.9 which is incompatible.
+# ERROR: gluonts 0.5.2 has requirement holidays<0.10,>=0.9, but you'll have holidays 0.10.3 which is incompatible.
+# ERROR: mxnet-cu100 1.4.1 has requirement numpy<1.15.0,>=1.8.2, but you'll have numpy 1.16.2 which is incompatible.
+
 cachetools==4.0.0
 Cython==0.29.14
 dataclasses==0.7
