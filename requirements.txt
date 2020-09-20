@@ -4,7 +4,7 @@ dataclasses==0.7
 DateTime==4.3
 decorator==4.4.1
 easydict==1.9
-fbprophet==0.5
+git+https://github.com/jroakes/prophet.git
 gluonts==0.4.2
 gunicorn==20.0.4
 Keras==2.2.5
