@@ -19,21 +19,23 @@ from setuptools.command.develop import develop
 from setuptools.command.test import test as test_command
 from typing import List
 
-PLATFORM = 'unix'
-if platform.platform().startswith('Win'):
-    PLATFORM = 'win'
+PLATFORM = "unix"
+if platform.platform().startswith("Win"):
+    PLATFORM = "win"
 
-MODEL_DIR = os.path.join('stan', PLATFORM)
-MODEL_TARGET_DIR = os.path.join('fbprophet', 'stan_model')
+MODEL_DIR = os.path.join("stan", PLATFORM)
+MODEL_TARGET_DIR = os.path.join("fbprophet", "stan_model")
 
 
 def get_backends_from_env() -> List[str]:
     from fbprophet.models import StanBackendEnum
+
     return os.environ.get("STAN_BACKEND", StanBackendEnum.PYSTAN.name).split(",")
 
 
 def build_models(target_dir):
     from fbprophet.models import StanBackendEnum
+
     for backend in get_backends_from_env():
         StanBackendEnum.get_backend_class(backend).build_model(target_dir, MODEL_DIR)
 
@@ -64,11 +66,14 @@ class DevelopCommand(develop):
 
 class TestCommand(test_command):
     user_options = [
-        ('test-module=', 'm', "Run 'test_suite' in specified module"),
-        ('test-suite=', 's',
-         "Run single test, case or suite (e.g. 'module.test_suite')"),
-        ('test-runner=', 'r', "Test runner to use"),
-        ('test-slow', 'w', "Test slow suites (default off)"),
+        ("test-module=", "m", "Run 'test_suite' in specified module"),
+        (
+            "test-suite=",
+            "s",
+            "Run single test, case or suite (e.g. 'module.test_suite')",
+        ),
+        ("test-runner=", "r", "Test runner to use"),
+        ("test-slow", "w", "Test slow suites (default off)"),
     ]
 
     def initialize_options(self):
@@ -78,23 +83,23 @@ class TestCommand(test_command):
     def finalize_options(self):
         super(TestCommand, self).finalize_options()
         if self.test_slow is None:
-            self.test_slow = getattr(self.distribution, 'test_slow', False)
+            self.test_slow = getattr(self.distribution, "test_slow", False)
 
     """We must run tests on the build directory, not source."""
 
     def with_project_on_sys_path(self, func):
         # Ensure metadata is up-to-date
-        self.reinitialize_command('build_py', inplace=0)
-        self.run_command('build_py')
+        self.reinitialize_command("build_py", inplace=0)
+        self.run_command("build_py")
         bpy_cmd = self.get_finalized_command("build_py")
         build_path = normalize_path(bpy_cmd.build_lib)
 
         # Build extensions
-        self.reinitialize_command('egg_info', egg_base=build_path)
-        self.run_command('egg_info')
+        self.reinitialize_command("egg_info", egg_base=build_path)
+        self.run_command("egg_info")
 
-        self.reinitialize_command('build_ext', inplace=0)
-        self.run_command('build_ext')
+        self.reinitialize_command("build_ext", inplace=0)
+        self.run_command("build_ext")
 
         ei_cmd = self.get_finalized_command("egg_info")
 
@@ -105,7 +110,7 @@ class TestCommand(test_command):
             sys.path.insert(0, normalize_path(ei_cmd.egg_base))
             working_set.__init__()
             add_activation_listener(lambda dist: dist.activate())
-            require('%s==%s' % (ei_cmd.egg_name, ei_cmd.egg_version))
+            require("%s==%s" % (ei_cmd.egg_name, ei_cmd.egg_version))
             func()
         finally:
             sys.path[:] = old_path
@@ -113,38 +118,38 @@ class TestCommand(test_command):
             sys.modules.update(old_modules)
             working_set.__init__()
 
-with open('README.md', 'r', encoding='utf-8') as f:
+
+with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
-with open('requirements.txt', 'r') as f:
+with open("requirements.txt", "r") as f:
     install_requires = f.read().splitlines()
 
 setup(
-    name='fbprophet',
-    version='0.7.1',
-    description='Automatic Forecasting Procedure',
-    url='https://facebook.github.io/prophet/',
-    author='Sean J. Taylor <sjtz@pm.me>, Ben Letham <bletham@fb.com>',
-    author_email='sjtz@pm.me',
-    license='MIT',
+    name="fbprophet",
+    version="0.7.1",
+    description="Automatic Forecasting Procedure",
+    url="https://facebook.github.io/prophet/",
+    author="Sean J. Taylor <sjtz@pm.me>, Ben Letham <bletham@fb.com>",
+    author_email="sjtz@pm.me",
+    license="MIT",
     packages=find_packages(),
-    setup_requires=[
-    ],
+    setup_requires=[],
     install_requires=install_requires,
-    python_requires='>=3',
+    python_requires=">=3",
     zip_safe=False,
     include_package_data=True,
     cmdclass={
-        'build_py': BuildPyCommand,
-        'develop': DevelopCommand,
-        'test': TestCommand,
+        "build_py": BuildPyCommand,
+        "develop": DevelopCommand,
+        "test": TestCommand,
     },
-    test_suite='fbprophet.tests',
+    test_suite="fbprophet.tests",
     classifiers=[
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
     ],
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
 )

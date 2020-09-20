@@ -14,7 +14,7 @@ import concurrent.futures
 import numpy as np
 import pandas as pd
 
-logger = logging.getLogger('fbprophet')
+logger = logging.getLogger("fbprophet")
 
 
 def generate_cutoffs(df, horizon, initial, period):
@@ -32,33 +32,37 @@ def generate_cutoffs(df, horizon, initial, period):
     list of pd.Timestamp
     """
     # Last cutoff is 'latest date in data - horizon' date
-    cutoff = df['ds'].max() - horizon
-    if cutoff < df['ds'].min():
-        raise ValueError('Less data than horizon.')
+    cutoff = df["ds"].max() - horizon
+    if cutoff < df["ds"].min():
+        raise ValueError("Less data than horizon.")
     result = [cutoff]
-    while result[-1] >= min(df['ds']) + initial:
+    while result[-1] >= min(df["ds"]) + initial:
         cutoff -= period
         # If data does not exist in data range (cutoff, cutoff + horizon]
-        if not (((df['ds'] > cutoff) & (df['ds'] <= cutoff + horizon)).any()):
+        if not (((df["ds"] > cutoff) & (df["ds"] <= cutoff + horizon)).any()):
             # Next cutoff point is 'last date before cutoff in data - horizon'
-            if cutoff > df['ds'].min():
-                closest_date = df[df['ds'] <= cutoff].max()['ds']
+            if cutoff > df["ds"].min():
+                closest_date = df[df["ds"] <= cutoff].max()["ds"]
                 cutoff = closest_date - horizon
             # else no data left, leave cutoff as is, it will be dropped.
         result.append(cutoff)
     result = result[:-1]
     if len(result) == 0:
         raise ValueError(
-            'Less data than horizon after initial window. '
-            'Make horizon or initial shorter.'
+            "Less data than horizon after initial window. "
+            "Make horizon or initial shorter."
         )
-    logger.info('Making {} forecasts with cutoffs between {} and {}'.format(
-        len(result), result[-1], result[0]
-    ))
+    logger.info(
+        "Making {} forecasts with cutoffs between {} and {}".format(
+            len(result), result[-1], result[0]
+        )
+    )
     return list(reversed(result))
 
 
-def cross_validation(model, horizon, period=None, initial=None, parallel=None, cutoffs=None):
+def cross_validation(
+    model, horizon, period=None, initial=None, parallel=None, cutoffs=None
+):
     """Cross-Validation for time series.
 
     Computes forecasts from historical cutoff points, which user can input.
@@ -117,20 +121,20 @@ def cross_validation(model, horizon, period=None, initial=None, parallel=None, c
     df = model.history.copy().reset_index(drop=True)
     horizon = pd.Timedelta(horizon)
 
-    predict_columns = ['ds', 'yhat']
+    predict_columns = ["ds", "yhat"]
     if model.uncertainty_samples:
-        predict_columns.extend(['yhat_lower', 'yhat_upper'])
-        
+        predict_columns.extend(["yhat_lower", "yhat_upper"])
+
     # Identify largest seasonality period
-    period_max = 0.
+    period_max = 0.0
     for s in model.seasonalities.values():
-        period_max = max(period_max, s['period'])
-    seasonality_dt = pd.Timedelta(str(period_max) + ' days')    
+        period_max = max(period_max, s["period"])
+    seasonality_dt = pd.Timedelta(str(period_max) + " days")
 
     if cutoffs is None:
         # Set period
         period = 0.5 * horizon if period is None else pd.Timedelta(period)
-        
+
         # Set initial
         if initial is None:
             initial = max(3 * horizon, seasonality_dt)
@@ -139,16 +143,16 @@ def cross_validation(model, horizon, period=None, initial=None, parallel=None, c
         # Compute Cutoffs
         cutoffs = generate_cutoffs(df, horizon, initial, period)
     else:
-        initial = cutoffs[0] - df['ds'].min()
-        
-    # Check if the initial window 
+        initial = cutoffs[0] - df["ds"].min()
+
+    # Check if the initial window
     # (that is, the amount of time between the start of the history and the first cutoff)
     # is less than the maximum seasonality period
     if initial < seasonality_dt:
-            msg = 'Seasonality has period of {} days '.format(period_max)
-            msg += 'which is larger than initial window. '
-            msg += 'Consider increasing initial.'
-            logger.warning(msg)
+        msg = "Seasonality has period of {} days ".format(period_max)
+        msg += "which is larger than initial window. "
+        msg += "Consider increasing initial."
+        logger.warning(msg)
 
     if parallel:
         valid = {"threads", "processes", "dask"}
@@ -161,20 +165,24 @@ def cross_validation(model, horizon, period=None, initial=None, parallel=None, c
             try:
                 from dask.distributed import get_client
             except ImportError as e:
-                raise ImportError("parallel='dask' requies the optional "
-                                  "dependency dask.") from e
+                raise ImportError(
+                    "parallel='dask' requies the optional " "dependency dask."
+                ) from e
             pool = get_client()
             # delay df and model to avoid large objects in task graph.
             df, model = pool.scatter([df, model])
         elif hasattr(parallel, "map"):
             pool = parallel
         else:
-            msg = ("'parallel' should be one of {} for an instance with a "
-                   "'map' method".format(', '.join(valid)))
+            msg = (
+                "'parallel' should be one of {} for an instance with a "
+                "'map' method".format(", ".join(valid))
+            )
             raise ValueError(msg)
 
-        iterables = ((df, model, cutoff, horizon, predict_columns)
-                     for cutoff in cutoffs)
+        iterables = (
+            (df, model, cutoff, horizon, predict_columns) for cutoff in cutoffs
+        )
         iterables = zip(*iterables)
 
         logger.info("Applying in parallel with %s", pool)
@@ -218,34 +226,39 @@ def single_cutoff_forecast(df, model, cutoff, horizon, predict_columns):
     # Generate new object with copying fitting options
     m = prophet_copy(model, cutoff)
     # Train model
-    history_c = df[df['ds'] <= cutoff]
+    history_c = df[df["ds"] <= cutoff]
     if history_c.shape[0] < 2:
         raise Exception(
-            'Less than two datapoints before cutoff. '
-            'Increase initial window.'
+            "Less than two datapoints before cutoff. " "Increase initial window."
         )
     m.fit(history_c, **model.fit_kwargs)
     # Calculate yhat
-    index_predicted = (df['ds'] > cutoff) & (df['ds'] <= cutoff + horizon)
+    index_predicted = (df["ds"] > cutoff) & (df["ds"] <= cutoff + horizon)
     # Get the columns for the future dataframe
-    columns = ['ds']
-    if m.growth == 'logistic':
-        columns.append('cap')
+    columns = ["ds"]
+    if m.growth == "logistic":
+        columns.append("cap")
         if m.logistic_floor:
-            columns.append('floor')
+            columns.append("floor")
     columns.extend(m.extra_regressors.keys())
-    columns.extend([
-        props['condition_name']
-        for props in m.seasonalities.values()
-        if props['condition_name'] is not None])
+    columns.extend(
+        [
+            props["condition_name"]
+            for props in m.seasonalities.values()
+            if props["condition_name"] is not None
+        ]
+    )
     yhat = m.predict(df[index_predicted][columns])
     # Merge yhat(predicts), y(df, original data) and cutoff
 
-    return pd.concat([
-        yhat[predict_columns],
-        df[index_predicted][['y']].reset_index(drop=True),
-        pd.DataFrame({'cutoff': [cutoff] * len(yhat)})
-    ], axis=1)
+    return pd.concat(
+        [
+            yhat[predict_columns],
+            df[index_predicted][["y"]].reset_index(drop=True),
+            pd.DataFrame({"cutoff": [cutoff] * len(yhat)}),
+        ],
+        axis=1,
+    )
 
 
 def prophet_copy(m, cutoff=None):
@@ -263,13 +276,13 @@ def prophet_copy(m, cutoff=None):
     Prophet class object with the same parameter with model variable
     """
     if m.history is None:
-        raise Exception('This is for copying a fitted Prophet object.')
+        raise Exception("This is for copying a fitted Prophet object.")
 
     if m.specified_changepoints:
         changepoints = m.changepoints
         if cutoff is not None:
             # Filter change points '< cutoff'
-            last_history_date = max(m.history['ds'][m.history['ds'] <= cutoff])
+            last_history_date = max(m.history["ds"][m.history["ds"] <= cutoff])
             changepoints = changepoints[changepoints < last_history_date]
     else:
         changepoints = None
@@ -292,7 +305,7 @@ def prophet_copy(m, cutoff=None):
         mcmc_samples=m.mcmc_samples,
         interval_width=m.interval_width,
         uncertainty_samples=m.uncertainty_samples,
-        stan_backend=m.stan_backend.get_type()
+        stan_backend=m.stan_backend.get_type(),
     )
     m2.extra_regressors = deepcopy(m.extra_regressors)
     m2.seasonalities = deepcopy(m.seasonalities)
@@ -344,23 +357,21 @@ def performance_metrics(df, metrics=None, rolling_window=0.1):
     -------
     Dataframe with a column for each metric, and column 'horizon'
     """
-    valid_metrics = ['mse', 'rmse', 'mae', 'mape', 'mdape', 'coverage']
+    valid_metrics = ["mse", "rmse", "mae", "mape", "mdape", "coverage"]
     if metrics is None:
         metrics = valid_metrics
-    if ('yhat_lower' not in df or 'yhat_upper' not in df) and ('coverage' in metrics):
-        metrics.remove('coverage')
+    if ("yhat_lower" not in df or "yhat_upper" not in df) and ("coverage" in metrics):
+        metrics.remove("coverage")
     if len(set(metrics)) != len(metrics):
-        raise ValueError('Input metrics must be a list of unique values')
+        raise ValueError("Input metrics must be a list of unique values")
     if not set(metrics).issubset(set(valid_metrics)):
-        raise ValueError(
-            'Valid values for metrics are: {}'.format(valid_metrics)
-        )
+        raise ValueError("Valid values for metrics are: {}".format(valid_metrics))
     df_m = df.copy()
-    df_m['horizon'] = df_m['ds'] - df_m['cutoff']
-    df_m.sort_values('horizon', inplace=True)
-    if 'mape' in metrics and df_m['y'].abs().min() < 1e-8:
-        logger.info('Skipping MAPE because y close to 0')
-        metrics.remove('mape')
+    df_m["horizon"] = df_m["ds"] - df_m["cutoff"]
+    df_m.sort_values("horizon", inplace=True)
+    if "mape" in metrics and df_m["y"].abs().min() < 1e-8:
+        logger.info("Skipping MAPE because y close to 0")
+        metrics.remove("mape")
     if len(metrics) == 0:
         return None
     w = int(rolling_window * df_m.shape[0])
@@ -374,7 +385,7 @@ def performance_metrics(df, metrics=None, rolling_window=0.1):
     res = dfs[metrics[0]]
     for i in range(1, len(metrics)):
         res_m = dfs[metrics[i]]
-        assert np.array_equal(res['horizon'].values, res_m['horizon'].values)
+        assert np.array_equal(res["horizon"].values, res_m["horizon"].values)
         res[metrics[i]] = res_m[metrics[i]]
     return res
 
@@ -397,13 +408,11 @@ def rolling_mean_by_h(x, h, w, name):
     Dataframe with columns horizon and name, the rolling mean of x.
     """
     # Aggregate over h
-    df = pd.DataFrame({'x': x, 'h': h})
-    df2 = (
-        df.groupby('h').agg(['mean', 'count']).reset_index().sort_values('h')
-    )
-    xm = df2['x']['mean'].values
-    ns = df2['x']['count'].values
-    hs = df2['h'].values
+    df = pd.DataFrame({"x": x, "h": h})
+    df2 = df.groupby("h").agg(["mean", "count"]).reset_index().sort_values("h")
+    xm = df2["x"]["mean"].values
+    ns = df2["x"]["count"].values
+    hs = df2["h"].values
 
     res_h = []
     res_x = []
@@ -414,7 +423,7 @@ def rolling_mean_by_h(x, h, w, name):
         n = int(ns[i])
         xbar = float(xm[i])
         j = i - 1
-        while ((n < w) and j >= 0):
+        while (n < w) and j >= 0:
             # Include points from the previous horizon. All of them if still
             # less than w, otherwise just enough to get to w.
             n2 = min(w - n, ns[j])
@@ -429,7 +438,7 @@ def rolling_mean_by_h(x, h, w, name):
         i -= 1
     res_h.reverse()
     res_x.reverse()
-    return pd.DataFrame({'horizon': res_h, name: res_x})
+    return pd.DataFrame({"horizon": res_h, name: res_x})
 
 
 def rolling_median_by_h(x, h, w, name):
@@ -453,10 +462,10 @@ def rolling_median_by_h(x, h, w, name):
     Dataframe with columns horizon and name, the rolling median of x.
     """
     # Aggregate over h
-    df = pd.DataFrame({'x': x, 'h': h})
-    grouped = df.groupby('h')
-    df2 = grouped.size().reset_index().sort_values('h')
-    hs = df2['h']
+    df = pd.DataFrame({"x": x, "h": h})
+    grouped = df.groupby("h")
+    df2 = grouped.size().reset_index().sort_values("h")
+    hs = df2["h"]
 
     res_h = []
     res_x = []
@@ -481,7 +490,7 @@ def rolling_median_by_h(x, h, w, name):
         i -= 1
     res_h.reverse()
     res_x.reverse()
-    return pd.DataFrame({'horizon': res_h, name: res_x})
+    return pd.DataFrame({"horizon": res_h, name: res_x})
 
 
 # The functions below specify performance metrics for cross-validation results.
@@ -501,12 +510,10 @@ def mse(df, w):
     -------
     Dataframe with columns horizon and mse.
     """
-    se = (df['y'] - df['yhat']) ** 2
+    se = (df["y"] - df["yhat"]) ** 2
     if w < 0:
-        return pd.DataFrame({'horizon': df['horizon'], 'mse': se})
-    return rolling_mean_by_h(
-        x=se.values, h=df['horizon'].values, w=w, name='mse'
-    )
+        return pd.DataFrame({"horizon": df["horizon"], "mse": se})
+    return rolling_mean_by_h(x=se.values, h=df["horizon"].values, w=w, name="mse")
 
 
 def rmse(df, w):
@@ -522,8 +529,8 @@ def rmse(df, w):
     Dataframe with columns horizon and rmse.
     """
     res = mse(df, w)
-    res['mse'] = np.sqrt(res['mse'])
-    res.rename({'mse': 'rmse'}, axis='columns', inplace=True)
+    res["mse"] = np.sqrt(res["mse"])
+    res.rename({"mse": "rmse"}, axis="columns", inplace=True)
     return res
 
 
@@ -539,12 +546,10 @@ def mae(df, w):
     -------
     Dataframe with columns horizon and mae.
     """
-    ae = np.abs(df['y'] - df['yhat'])
+    ae = np.abs(df["y"] - df["yhat"])
     if w < 0:
-        return pd.DataFrame({'horizon': df['horizon'], 'mae': ae})
-    return rolling_mean_by_h(
-        x=ae.values, h=df['horizon'].values, w=w, name='mae'
-    )
+        return pd.DataFrame({"horizon": df["horizon"], "mae": ae})
+    return rolling_mean_by_h(x=ae.values, h=df["horizon"].values, w=w, name="mae")
 
 
 def mape(df, w):
@@ -559,12 +564,10 @@ def mape(df, w):
     -------
     Dataframe with columns horizon and mape.
     """
-    ape = np.abs((df['y'] - df['yhat']) / df['y'])
+    ape = np.abs((df["y"] - df["yhat"]) / df["y"])
     if w < 0:
-        return pd.DataFrame({'horizon': df['horizon'], 'mape': ape})
-    return rolling_mean_by_h(
-        x=ape.values, h=df['horizon'].values, w=w, name='mape'
-    )
+        return pd.DataFrame({"horizon": df["horizon"], "mape": ape})
+    return rolling_mean_by_h(x=ape.values, h=df["horizon"].values, w=w, name="mape")
 
 
 def mdape(df, w):
@@ -579,12 +582,10 @@ def mdape(df, w):
     -------
     Dataframe with columns horizon and mdape.
     """
-    ape = np.abs((df['y'] - df['yhat']) / df['y'])
+    ape = np.abs((df["y"] - df["yhat"]) / df["y"])
     if w < 0:
-        return pd.DataFrame({'horizon': df['horizon'], 'mdape': ape})
-    return rolling_median_by_h(
-        x=ape.values, h=df['horizon'], w=w, name='mdape'
-    )
+        return pd.DataFrame({"horizon": df["horizon"], "mdape": ape})
+    return rolling_median_by_h(x=ape.values, h=df["horizon"], w=w, name="mdape")
 
 
 def smape(df, w):
@@ -599,12 +600,10 @@ def smape(df, w):
     -------
     Dataframe with columns horizon and smape.
     """
-    sape = np.abs(df['yhat']-df['y']) / ((np.abs(df['y']) + np.abs(df['yhat'])) /2)
+    sape = np.abs(df["yhat"] - df["y"]) / ((np.abs(df["y"]) + np.abs(df["yhat"])) / 2)
     if w < 0:
-        return pd.DataFrame({'horizon': df['horizon'], 'smape': sape})
-    return rolling_mean_by_h(
-        x=sape.values, h=df['horizon'].values, w=w, name='smape'
-    )
+        return pd.DataFrame({"horizon": df["horizon"], "smape": sape})
+    return rolling_mean_by_h(x=sape.values, h=df["horizon"].values, w=w, name="smape")
 
 
 def coverage(df, w):
@@ -619,9 +618,9 @@ def coverage(df, w):
     -------
     Dataframe with columns horizon and coverage.
     """
-    is_covered = (df['y'] >= df['yhat_lower']) & (df['y'] <= df['yhat_upper'])
+    is_covered = (df["y"] >= df["yhat_lower"]) & (df["y"] <= df["yhat_upper"])
     if w < 0:
-        return pd.DataFrame({'horizon': df['horizon'], 'coverage': is_covered})
+        return pd.DataFrame({"horizon": df["horizon"], "coverage": is_covered})
     return rolling_mean_by_h(
-        x=is_covered.values, h=df['horizon'].values, w=w, name='coverage'
+        x=is_covered.values, h=df["horizon"].values, w=w, name="coverage"
     )

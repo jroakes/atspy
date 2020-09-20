@@ -14,7 +14,8 @@ import pkg_resources
 import os
 
 import logging
-logger = logging.getLogger('fbprophet.models')
+
+logger = logging.getLogger("fbprophet.models")
 
 
 class IStanBackend(ABC):
@@ -46,7 +47,6 @@ class IStanBackend(ABC):
 
 
 class CmdStanPyBackend(IStanBackend):
-
     @staticmethod
     def get_type():
         return StanBackendEnum.CMDSTANPY.name
@@ -55,8 +55,9 @@ class CmdStanPyBackend(IStanBackend):
     def build_model(target_dir, model_dir):
         from shutil import copy
         import cmdstanpy
-        model_name = 'prophet.stan'
-        target_name = 'prophet_model.bin'
+
+        model_name = "prophet.stan"
+        target_name = "prophet_model.bin"
 
         sm = cmdstanpy.CmdStanModel(stan_file=os.path.join(model_dir, model_name))
         sm.compile()
@@ -64,37 +65,38 @@ class CmdStanPyBackend(IStanBackend):
 
     def load_model(self):
         import cmdstanpy
+
         model_file = pkg_resources.resource_filename(
-            'fbprophet',
-            'stan_model/prophet_model.bin',
+            "fbprophet",
+            "stan_model/prophet_model.bin",
         )
         return cmdstanpy.CmdStanModel(exe_file=model_file)
 
     def fit(self, stan_init, stan_data, **kwargs):
         (stan_init, stan_data) = self.prepare_data(stan_init, stan_data)
-        if 'algorithm' not in kwargs:
-            kwargs['algorithm'] = 'Newton' if stan_data['T'] < 100 else 'LBFGS'
+        if "algorithm" not in kwargs:
+            kwargs["algorithm"] = "Newton" if stan_data["T"] < 100 else "LBFGS"
         iterations = int(1e4)
         try:
-            self.stan_fit = self.model.optimize(data=stan_data,
-                                           inits=stan_init,
-                                           iter=iterations,
-                                           **kwargs)
+            self.stan_fit = self.model.optimize(
+                data=stan_data, inits=stan_init, iter=iterations, **kwargs
+            )
         except RuntimeError as e:
             # Fall back on Newton
-            if kwargs['algorithm'] != 'Newton':
+            if kwargs["algorithm"] != "Newton":
                 logger.warning(
-                    'Optimization terminated abnormally. Falling back to Newton.'
+                    "Optimization terminated abnormally. Falling back to Newton."
                 )
-                kwargs['algorithm'] = 'Newton'
-                self.stan_fit = self.model.optimize(data=stan_data,
-                                               inits=stan_init,
-                                               iter=iterations,
-                                               **kwargs)
+                kwargs["algorithm"] = "Newton"
+                self.stan_fit = self.model.optimize(
+                    data=stan_data, inits=stan_init, iter=iterations, **kwargs
+                )
             else:
                 raise e
 
-        params = self.stan_to_dict_numpy(self.stan_fit.column_names, self.stan_fit.optimized_params_np)
+        params = self.stan_to_dict_numpy(
+            self.stan_fit.column_names, self.stan_fit.optimized_params_np
+        )
         for par in params:
             params[par] = params[par].reshape((1, -1))
         return params
@@ -102,16 +104,15 @@ class CmdStanPyBackend(IStanBackend):
     def sampling(self, stan_init, stan_data, samples, **kwargs) -> dict:
         (stan_init, stan_data) = self.prepare_data(stan_init, stan_data)
 
-        if 'chains' not in kwargs:
-            kwargs['chains'] = 4
+        if "chains" not in kwargs:
+            kwargs["chains"] = 4
         iter_half = samples // 2
-        if 'iter_warmup' not in kwargs:
-            kwargs['iter_warmup'] = iter_half
+        if "iter_warmup" not in kwargs:
+            kwargs["iter_warmup"] = iter_half
 
-        self.stan_fit = self.model.sample(data=stan_data,
-                                     inits=stan_init,
-                                     iter_sampling=iter_half,
-                                     **kwargs)
+        self.stan_fit = self.model.sample(
+            data=stan_data, inits=stan_init, iter_sampling=iter_half, **kwargs
+        )
         res = self.stan_fit.sample
         (samples, c, columns) = res.shape
         res = res.reshape((samples * c, columns))
@@ -122,7 +123,7 @@ class CmdStanPyBackend(IStanBackend):
             if s[1] == 1:
                 params[par] = params[par].reshape((s[0],))
 
-            if par in ['delta', 'beta'] and len(s) < 2:
+            if par in ["delta", "beta"] and len(s) < 2:
                 params[par] = params[par].reshape((-1, 1))
 
         return params
@@ -130,32 +131,32 @@ class CmdStanPyBackend(IStanBackend):
     @staticmethod
     def prepare_data(init, data) -> Tuple[dict, dict]:
         cmdstanpy_data = {
-            'T': data['T'],
-            'S': data['S'],
-            'K': data['K'],
-            'tau': data['tau'],
-            'trend_indicator': data['trend_indicator'],
-            'y': data['y'].tolist(),
-            't': data['t'].tolist(),
-            'cap': data['cap'].tolist(),
-            't_change': data['t_change'].tolist(),
-            's_a': data['s_a'].tolist(),
-            's_m': data['s_m'].tolist(),
-            'X': data['X'].to_numpy().tolist(),
-            'sigmas': data['sigmas']
+            "T": data["T"],
+            "S": data["S"],
+            "K": data["K"],
+            "tau": data["tau"],
+            "trend_indicator": data["trend_indicator"],
+            "y": data["y"].tolist(),
+            "t": data["t"].tolist(),
+            "cap": data["cap"].tolist(),
+            "t_change": data["t_change"].tolist(),
+            "s_a": data["s_a"].tolist(),
+            "s_m": data["s_m"].tolist(),
+            "X": data["X"].to_numpy().tolist(),
+            "sigmas": data["sigmas"],
         }
 
         cmdstanpy_init = {
-            'k': init['k'],
-            'm': init['m'],
-            'delta': init['delta'].tolist(),
-            'beta': init['beta'].tolist(),
-            'sigma_obs': 1
+            "k": init["k"],
+            "m": init["m"],
+            "delta": init["delta"].tolist(),
+            "beta": init["beta"].tolist(),
+            "sigma_obs": 1,
         }
         return (cmdstanpy_init, cmdstanpy_data)
 
     @staticmethod
-    def stan_to_dict_numpy(column_names: Tuple[str, ...], data: 'np.array'):
+    def stan_to_dict_numpy(column_names: Tuple[str, ...], data: "np.array"):
         import numpy as np
 
         output = OrderedDict()
@@ -174,9 +175,7 @@ class CmdStanPyBackend(IStanBackend):
 
             if curr != prev:
                 if prev in output:
-                    raise RuntimeError(
-                        "Found repeated column name"
-                    )
+                    raise RuntimeError("Found repeated column name")
                 if two_dims:
                     output[prev] = np.array(data[:, start:end])
                 else:
@@ -188,9 +187,7 @@ class CmdStanPyBackend(IStanBackend):
                 end += 1
 
         if prev in output:
-            raise RuntimeError(
-                "Found repeated column name"
-            )
+            raise RuntimeError("Found repeated column name")
         if two_dims:
             output[prev] = np.array(data[:, start:end])
         else:
@@ -199,7 +196,6 @@ class CmdStanPyBackend(IStanBackend):
 
 
 class PyStanBackend(IStanBackend):
-
     @staticmethod
     def get_type():
         return StanBackendEnum.PYSTAN.name
@@ -207,12 +203,13 @@ class PyStanBackend(IStanBackend):
     @staticmethod
     def build_model(target_dir, model_dir):
         import pystan
-        model_name = 'prophet.stan'
-        target_name = 'prophet_model.pkl'
+
+        model_name = "prophet.stan"
+        target_name = "prophet_model.pkl"
         with open(os.path.join(model_dir, model_name)) as f:
             model_code = f.read()
         sm = pystan.StanModel(model_code=model_code)
-        with open(os.path.join(target_dir, target_name), 'wb') as f:
+        with open(os.path.join(target_dir, target_name), "wb") as f:
             pickle.dump(sm, f, protocol=pickle.HIGHEST_PROTOCOL)
 
     def sampling(self, stan_init, stan_data, samples, **kwargs) -> dict:
@@ -228,7 +225,7 @@ class PyStanBackend(IStanBackend):
         for par in self.stan_fit.model_pars:
             out[par] = self.stan_fit[par]
             # Shape vector parameters
-            if par in ['delta', 'beta'] and len(out[par].shape) < 2:
+            if par in ["delta", "beta"] and len(out[par].shape) < 2:
                 out[par] = out[par].reshape((-1, 1))
         return out
 
@@ -237,7 +234,7 @@ class PyStanBackend(IStanBackend):
         args = dict(
             data=stan_data,
             init=lambda: stan_init,
-            algorithm='Newton' if stan_data['T'] < 100 else 'LBFGS',
+            algorithm="Newton" if stan_data["T"] < 100 else "LBFGS",
             iter=1e4,
         )
         args.update(kwargs)
@@ -246,9 +243,9 @@ class PyStanBackend(IStanBackend):
         except RuntimeError:
             # Fall back on Newton
             logger.warning(
-                'Optimization terminated abnormally. Falling back to Newton.'
+                "Optimization terminated abnormally. Falling back to Newton."
             )
-            args['algorithm'] = 'Newton'
+            args["algorithm"] = "Newton"
             self.stan_fit = self.model.optimizing(**args)
 
         params = dict()
@@ -261,10 +258,10 @@ class PyStanBackend(IStanBackend):
     def load_model(self):
         """Load compiled Stan model"""
         model_file = pkg_resources.resource_filename(
-            'fbprophet',
-            'stan_model/prophet_model.pkl',
+            "fbprophet",
+            "stan_model/prophet_model.pkl",
         )
-        with open(model_file, 'rb') as f:
+        with open(model_file, "rb") as f:
             return pickle.load(f)
 
 

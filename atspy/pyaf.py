@@ -5,13 +5,13 @@
 # import atspy.TS.Utils as tsutil
 
 # class cForecastEngine:
-        
+
 #     def __init__(self):
 #         self.mSignalDecomposition = tsdec.cSignalDecomposition();
 #         self.mOptions = tsopts.cSignalDecomposition_Options();
 #         pass
 
-    
+
 #     def train(self , iInputDS, iTime, iSignal, iHorizon, iExogenousData = None):
 #         try:
 #             self.mSignalDecomposition.mOptions = self.mOptions;
@@ -19,7 +19,7 @@
 #         except tsutil.PyAF_Error as error:
 #             raise error
 #         except Exception as error:
-#             # print('caught this training error: ' + repr(error))            
+#             # print('caught this training error: ' + repr(error))
 #             raise tsutil.PyAF_Error("TRAIN_FAILED");
 #         pass
 
@@ -32,11 +32,11 @@
 #         except Exception as error:
 #             # print('caught this forecast error: ' + repr(error))
 #             raise tsutil.PyAF_Error("FORECAST_FAILED");
-        
+
 #     def getModelInfo(self):
 #         return  self.mSignalDecomposition.getModelInfo();
 
-    
+
 #     def standardPlots(self , name = None, format = 'png'):
 #         self.mSignalDecomposition.standardPlots(name, format);
 

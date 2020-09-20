@@ -921,6 +921,7 @@ class PH(Philippines):
 # This is now in Holidays, but with alias TR instead of the TU that we used.
 # Include TU as an alias for backwards compatibility.
 
+
 class TU(Turkey):
     pass
 
@@ -1375,22 +1376,24 @@ class UnitedArabEmirates(HolidayBase):
     Reference:
     https://en.wikipedia.org/wiki/Public_holidays_in_the_United_Arab_Emirates
     """
-    
+
     def __init__(self, **kwargs):
         self.country = "AE"
         HolidayBase.__init__(self, **kwargs)
-        
+
     def _populate(self, year):
         # New Year's Day
         name = "New Year's Day"
         self[date(year, 1, 1)] = name
-        
+
         # Eid al-Fitr
         name = "Eid al-Fitr"
         for offset in range(-1, 2, 1):
             islam_year = from_gregorian(year + offset, 6, 15)[0]
             y1, m1, d1 = to_gregorian(islam_year, 9, 29)
-            y2, m2, d2 = to_gregorian(islam_year, 9, 30) # Note: Ramadan day count is determined by Moon Sighting
+            y2, m2, d2 = to_gregorian(
+                islam_year, 9, 30
+            )  # Note: Ramadan day count is determined by Moon Sighting
             y3, m3, d3 = to_gregorian(islam_year, 10, 1)
             y4, m4, d4 = to_gregorian(islam_year, 10, 2)
             y5, m5, d5 = to_gregorian(islam_year, 10, 3)
@@ -1412,7 +1415,7 @@ class UnitedArabEmirates(HolidayBase):
             y, m, d = to_gregorian(islam_year, 12, 9)
             if y == year:
                 self[date(y, m, d)] = name
-        
+
         # Feast of the Sacrifice
         name = "Feast of the Sacrifice"
         for offset in range(-1, 2, 1):
@@ -1434,16 +1437,16 @@ class UnitedArabEmirates(HolidayBase):
             y, m, d = to_gregorian(islam_year + 1, 1, 1)
             if y == year:
                 self[date(y, m, d)] = name
-        
+
         # Commemoration Day
         name = "Commemoration Day"
         self[date(year, 11, 30)] = name
-        
+
         # National Day
         name = "National Day"
         self[date(year, 12, 2)] = name
         self[date(year, 12, 3)] = name
-    
-    
+
+
 class AE(UnitedArabEmirates):
     pass
