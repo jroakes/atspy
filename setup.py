@@ -1,66 +1,61 @@
-import platform
-import sys
+from setuptools import setup, Command
 import os
-import os.path
-from pkg_resources import normalize_path, working_set, add_activation_listener, require
-from setuptools import setup, find_packages
-from setuptools.command.build_py import build_py
-from typing import List
-
-PLATFORM = "unix"
-if platform.platform().startswith("Win"):
-    PLATFORM = "win"
-
-MODEL_DIR = os.path.join("atspy", "stan", PLATFORM)
-MODEL_TARGET_DIR = os.path.join("atspy", "fbprophet", "stan_model")
+import sys
 
 
-def get_backends_from_env():
-    from fbprophet.models import StanBackendEnum
 
-    return os.environ.get("STAN_BACKEND", StanBackendEnum.PYSTAN.name).split(",")
+setup(name='atspy',
+      version='0.2.6',
+      description='Automated Time Series in Python',
+      url='https://github.com/firmai/atspy',
+      author='snowde',
+      author_email='d.snow@firmai.org',
+      license='MIT',
+      packages=['atspy'],
+      install_requires=[
 
-
-def build_models(target_dir):
-    from fbprophet.models import StanBackendEnum
-
-    for backend in get_backends_from_env():
-        StanBackendEnum.get_backend_class(backend).build_model(target_dir, MODEL_DIR)
-
-
-class BuildPyCommand(build_py):
-    """Custom build command to pre-compile Stan models."""
-
-    def run(self):
-        if not self.dry_run:
-            target_dir = os.path.join(self.build_lib, MODEL_TARGET_DIR)
-            self.mkpath(target_dir)
-            build_models(target_dir)
-
-        build_py.run(self)
-
-
-with open("requirements.txt", "r") as f:
-    install_requires = f.read().splitlines()
-
-with open("README.md", "r", encoding="utf-8") as f:
-    long_description = f.read()
-
-setup(
-    name="atspy with fbprophet",
-    version="0.2.6.1",
-    description="Automated Time Series in Python (Includes FB Prophet)",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/jroakes/atspy.git",
-    author="snowde",
-    author_email="d.snow@firmai.org",
-    packages=find_packages(),
-    license="MIT",
-    setup_requires=[],
-    install_requires=install_requires,
-    python_requires=">=3",
-    include_package_data=True,
-    cmdclass={"build_py": BuildPyCommand},
-    zip_safe=False,
-)
+            "cachetools==4.0.0",
+            "Cython==0.29.14",
+            "dataclasses==0.7",
+            "DateTime==4.3",
+            "decorator==4.4.1",
+            "easydict==1.9",
+            "fbprophet==0.5",
+            "gluonts==0.4.2",
+            "gunicorn==20.0.4",
+            "Keras==2.2.5",
+            "lightgbm==2.2.3",
+            "matplotlib==3.1.2",
+            "mxnet-cu100==1.4.1",
+            "numba==0.47.0",
+            "numexpr==2.7.1",
+            "pandas==0.25.3",
+            "pip-tools==4.2.0",
+            "pmdarima==1.5.2",
+            "psutil==5.6.6",
+            "psycopg2==2.7.6.1",
+            "scikit-learn==0.22.1",
+            "scipy==1.4.1",
+            "seaborn==0.9.1",
+            "sklearn==0.0",
+            "statsmodels==0.10.2",
+            "sympy==1.1.1",
+            "tbats==1.0.9",
+            "tblib==1.6.0",
+            "tensorflow==1.15.2",
+            "tflearn==0.3.2",
+            "torch==1.4.0",
+            "tqdm==4.28.1",
+            "tsfresh==0.14.1",
+            "tweepy==3.6.0",
+            "typing==3.6.6",
+            "typing-extensions==3.6.6",
+            "xlrd==1.1.0",
+            "seasonal==0.3.1",
+            "nbeats-pytorch==1.3.0",
+            "gluonts==0.4.2",
+            "numpy==1.17.4",
+            "pydantic==1.4"
+            ],
+            
+      zip_safe=False)
