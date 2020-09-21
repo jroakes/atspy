@@ -1,61 +1,26 @@
-from setuptools import setup, Command
+from setuptools import setup, find_packages
 import os
 import sys
 
+with open("requirements.txt", "r") as f:
+    install_requires = f.read().splitlines()
 
+with open("README.md", "r", encoding="utf-8") as f:
+    long_description = f.read()
 
-setup(name='atspy',
-      version='0.2.6',
-      description='Automated Time Series in Python',
-      url='https://github.com/firmai/atspy',
-      author='snowde',
-      author_email='d.snow@firmai.org',
-      license='MIT',
-      packages=['atspy'],
-      install_requires=[
-
-            "cachetools==4.0.0",
-            "Cython==0.29.14",
-            "dataclasses==0.7",
-            "DateTime==4.3",
-            "decorator==4.4.1",
-            "easydict==1.9",
-            "fbprophet==0.5",
-            "gluonts==0.4.2",
-            "gunicorn==20.0.4",
-            "Keras==2.2.5",
-            "lightgbm==2.2.3",
-            "matplotlib==3.1.2",
-            "mxnet-cu100==1.4.1",
-            "numba==0.47.0",
-            "numexpr==2.7.1",
-            "pandas==0.25.3",
-            "pip-tools==4.2.0",
-            "pmdarima==1.5.2",
-            "psutil==5.6.6",
-            "psycopg2==2.7.6.1",
-            "scikit-learn==0.22.1",
-            "scipy==1.4.1",
-            "seaborn==0.9.1",
-            "sklearn==0.0",
-            "statsmodels==0.10.2",
-            "sympy==1.1.1",
-            "tbats==1.0.9",
-            "tblib==1.6.0",
-            "tensorflow==1.15.2",
-            "tflearn==0.3.2",
-            "torch==1.4.0",
-            "tqdm==4.28.1",
-            "tsfresh==0.14.1",
-            "tweepy==3.6.0",
-            "typing==3.6.6",
-            "typing-extensions==3.6.6",
-            "xlrd==1.1.0",
-            "seasonal==0.3.1",
-            "nbeats-pytorch==1.3.0",
-            "gluonts==0.4.2",
-            "numpy==1.17.4",
-            "pydantic==1.4"
-            ],
-            
-      zip_safe=False)
+setup(
+        name='atspy',
+        version='0.2.6',
+        description='Automated Time Series in Python',
+        long_description=long_description,
+        long_description_content_type="text/markdown",
+        url='https://github.com/jroakes/atspy.git',
+        author='snowde',
+        author_email='d.snow@firmai.org',
+        license='MIT',
+        packages=find_packages(),
+        install_requires=install_requires,
+        python_requires=">=3",
+        include_package_data=True,
+        zip_safe=False
+      )
