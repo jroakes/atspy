@@ -19,7 +19,7 @@ from sklearn.metrics import mean_squared_error
 from statsmodels.tools.eval_measures import rmse
 import os
 import seaborn as sns
-from .fbprophet import Prophet
+from fbprophet import Prophet
 from sklearn.preprocessing import MinMaxScaler
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
